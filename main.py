@@ -8,46 +8,46 @@ base_url = "https://stoigr.org"
 
 # Список категорий (пример; замените на реальные категории)
 categories = [
-    "hotgames-2023",
-"online-games",
-"arkady-games",
-"golovolomki",
-"gonki-games",
-"gonki-for-two-game",
-"gonki-na-motociklah",
-"russian-cars-gonki",
-"dopolneniya-games",
-"draki-games",
-"zombie-games",
-"dlya-devochek-games",
-"kids-game",
-"game-for-boys",
-"survival-game",
-"games-two",
-"russian-games",
-"dlya-slabyh-pk",
-"mechanics-games-torrent",
-"xatab-games-torrent",
-"indie-games",
-"kvest-games",
-"logic-games",
-"open-world-games",
-"sandbox-game",
-"platformer-game",
-"poisk-predmetov-games",
-"priklyucheniya-games",
-"rpg-games",
-"sborniki-games",
-"simulyatory-games",
-"sport-games",
-"strategii-games",
-"top-100-games",
-"horror-games",
-"shuter-games",
-"shitery-ot-pervogo-litsa",
-"action-games",
+#     "hotgames-2023",
+# "online-games",
+# "arkady-games",
+# "golovolomki",
+# "gonki-games",
+# "gonki-for-two-game",
+# "gonki-na-motociklah",
+# "russian-cars-gonki",
+# "dopolneniya-games",
+# "draki-games",
+# "zombie-games",
+# "dlya-devochek-games",
+# "kids-game",
+# "game-for-boys",
+# "survival-game",
+# "games-two",
+# "russian-games",
+# "dlya-slabyh-pk",
+# "mechanics-games-torrent",
+# "xatab-games-torrent",
+# "indie-games",
+# "kvest-games",
+# "logic-games",
+# "open-world-games",
+# "sandbox-game",
+# "platformer-game",
+# "poisk-predmetov-games",
+# "priklyucheniya-games",
+# "rpg-games",
+# "sborniki-games",
+# "simulyatory-games",
+# "sport-games",
+# "strategii-games",
+# "top-100-games",
+# "horror-games",
+# "shuter-games",
+# "shitery-ot-pervogo-litsa",
+# "action-games",
 "erotic-game",
-"ya-ishchu-game",
+# "ya-ishchu-game",
     # Добавьте другие категории, которые вам нужны
 ]
 
@@ -76,10 +76,11 @@ def parse_category(category):
 
 
 # Функция для парсинга страницы игры
+# Функция для парсинга страницы игры
 def parse_game_page(game_url):
     url = game_url if game_url.startswith("http") else f"{base_url}{game_url}"  # Формируем полный URL
     headers = {
-        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User  -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
     try:
         response = requests.get(url, headers=headers, timeout=10)  # Установите тайм-аут
@@ -110,21 +111,23 @@ def parse_game_page(game_url):
 
         magnet_link = magnet_element['href']  # Ссылка на торрент
 
-        file_size_element = item.select_one('.tdzhach')
+        # Изменяем селектор для получения размера файла
+        file_size_element = item.find('td', class_='tdname', string='Размер:')
         if file_size_element is None:
             print(f"Размер файла не найден на странице {url}")
             continue  # Пропускаем, если размер файла не найден
 
+        # Получаем следующий элемент <td>, который содержит размер файла
         file_size = file_size_element.find_next_sibling('td').text.strip()  # Размер файла
 
-        status_element = item.select_one('#tdstatus')
-        status = status_element.text.strip() if status_element else "Не указано"  # Статус
+        # status_element = item.select_one('#tdstatus')
+        # status = status_element.text.strip() if status_element else "Не указано"  # Статус
 
         downloads.append({
             "title": title,
             "uris": [magnet_link],
             "fileSize": file_size,
-            "status": status,
+            # "status": status,
             "repackLinkSource": url  # Ссылка на страницу игры
         })
 
