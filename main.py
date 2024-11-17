@@ -54,33 +54,59 @@ categories = [
 
 # Функция для парсинга страниц категорий
 def parse_category(category):
-    url = f"{base_url}/{category}/"
-    headers = {
-        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    try:
-        response = requests.get(url, headers=headers, timeout=10)  # Установите тайм-аут
-        response.raise_for_status()  # Проверка на ошибки
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка доступа к {url}: {e}")
-        return []
-
-    soup = BeautifulSoup(response.content, 'html.parser')
+    current_page = 1
     game_links = []
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
 
-    # Извлечение ссылок на страницы игр
-    for link in soup.select('div.short-story a'):
-        game_links.append(link['href'])  # Сохраняем относительные ссылки
+    while True:
+        # Формируем URL для текущей страницы
+        if current_page == 1:
+            url = f"{base_url}/{category}/"  # Базовая категория для первой страницы
+        else:
+            url = f"{base_url}/{category}/page/{current_page}/"  # Для остальных страниц
+
+        print(f"Парсинг страницы: {url}")
+
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Ошибка доступа к {url}: {e}")
+            break
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Извлекаем ссылки на страницы игр
+        page_links = soup.select('div.short-story a')
+        if not page_links:  # Если на странице нет ссылок, заканчиваем
+            print(f"Ссылки не найдены на странице {url}. Возможно, достигли последней страницы.")
+            break
+
+        for link in page_links:
+            game_links.append(link['href'])  # Сохраняем относительные ссылки
+
+        # Проверяем наличие навигации и кнопки "Вперед"
+        navigation = soup.select_one('div.navigation')
+        if navigation and navigation.find('a', string="Вперед"):
+            current_page += 1  # Переходим к следующей странице
+        else:
+            print("Достигнута последняя страница.")
+            break
 
     return game_links
 
 
+
+
+# Функция для парсинга страницы игры
 # Функция для парсинга страницы игры
 # Функция для парсинга страницы игры
 def parse_game_page(game_url):
     url = game_url if game_url.startswith("http") else f"{base_url}{game_url}"  # Формируем полный URL
     headers = {
-        'User  -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
     try:
         response = requests.get(url, headers=headers, timeout=10)  # Установите тайм-аут
@@ -120,18 +146,19 @@ def parse_game_page(game_url):
         # Получаем следующий элемент <td>, который содержит размер файла
         file_size = file_size_element.find_next_sibling('td').text.strip()  # Размер файла
 
-        # status_element = item.select_one('#tdstatus')
-        # status = status_element.text.strip() if status_element else "Не указано"  # Статус
+        # Добавляем поле "uploadDate" с фиксированной датой
+        upload_date = "2024-09-20T08:06:00Z"
 
         downloads.append({
             "title": title,
             "uris": [magnet_link],
+            "uploadDate": upload_date,  # Добавлено поле
             "fileSize": file_size,
-            # "status": status,
             "repackLinkSource": url  # Ссылка на страницу игры
         })
 
     return downloads
+
 
 
 # Основная функция
